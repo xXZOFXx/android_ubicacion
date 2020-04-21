@@ -3,12 +3,11 @@ package com.example.ubicacion
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -16,6 +15,11 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import java.io.*
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener  {
 
@@ -39,6 +43,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         private lateinit var map: GoogleMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -91,6 +96,41 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
 
+
+
+
+    fun sendPostRequest(userName:String, password:String) {
+
+        var reqParam = URLEncoder.encode("username", "UTF-8") + "=" + URLEncoder.encode(userName, "UTF-8")
+        reqParam += "&" + URLEncoder.encode("password", "UTF-8") + "=" + URLEncoder.encode(password, "UTF-8")
+        val mURL = URL("<Your API Link>")
+
+        with(mURL.openConnection() as HttpURLConnection) {
+            // optional default is GET
+            requestMethod = "POST"
+
+            val wr = OutputStreamWriter(getOutputStream());
+            wr.write(reqParam);
+            wr.flush();
+
+            println("URL : $url")
+            println("Response Code : $responseCode")
+
+            BufferedReader(InputStreamReader(inputStream)).use {
+                val response = StringBuffer()
+
+                var inputLine = it.readLine()
+                while (inputLine != null) {
+                    response.append(inputLine)
+                    inputLine = it.readLine()
+                }
+                println("Response : $response")
+            }
+        }
+    }
+
+
+
     private fun setUpMap() {
 
         if (ActivityCompat.checkSelfPermission(this,
@@ -117,5 +157,53 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 }
 
     }
+
+
+    fun pushToChat(message: String) {
+
+        val serverURL: String = "http://18.217.147.215:5000/api/eventos/v1/crearevento"
+        val url = URL(serverURL)
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "POST"
+        connection.connectTimeout = 300000
+        connection.connectTimeout = 300000
+        connection.doOutput = true
+
+        val postData: ByteArray = message.toByteArray(StandardCharsets.UTF_8)
+
+        connection.setRequestProperty("charset", "utf-8")
+        connection.setRequestProperty("Content-lenght", postData.size.toString())
+        connection.setRequestProperty("Content-Type", "application/json")
+
+        try {
+            val outputStream: DataOutputStream = DataOutputStream(connection.outputStream)
+            outputStream.write(postData)
+            outputStream.flush()
+        } catch (exception: Exception) {
+
+        }
+
+        if (connection.responseCode != HttpURLConnection.HTTP_OK && connection.responseCode != HttpURLConnection.HTTP_CREATED) {
+            try {
+                val inputStream: DataInputStream = DataInputStream(connection.inputStream)
+                val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
+                val output: String = reader.readLine()
+
+                println("There was error while connecting the chat $output")
+                System.exit(0)
+
+            } catch (exception: Exception) {
+                throw Exception("Exception while push the notification  $exception.message")
+            }
+        }
+
+    }
+
+
+
+
+
+
+
 
 }
