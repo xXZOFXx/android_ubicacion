@@ -96,6 +96,47 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
 
+    fun sendPost(id:String, lat:String) {
+
+        //Define url para realizar peticion POST.
+        var urlPost = "http://18.217.147.215:5000/api/eventos/v1/crearevento";
+
+        //Concatena y codifica parámetros.
+        var reqParam = URLEncoder.encode("id", "UTF-8") + "=" + URLEncoder.encode(id, "UTF-8")
+        reqParam += "&" + URLEncoder.encode("lat", "UTF-8") + "=" + URLEncoder.encode(lat, "UTF-8")
+
+        val mURL = URL(urlPost)
+
+        with(mURL.openConnection() as HttpURLConnection) {
+            //Define metodo
+            requestMethod = "POST"
+
+            val wr = OutputStreamWriter(getOutputStream());
+            wr.write(reqParam);
+            wr.flush();
+
+            println(requestMethod + "URL : $url")
+            println(requestMethod + "Response Code : $responseCode")
+
+            BufferedReader(InputStreamReader(inputStream)).use {
+                val response = StringBuffer()
+
+                var inputLine = it.readLine()
+                while (inputLine != null) {
+                    response.append(inputLine)
+                    inputLine = it.readLine()
+                }
+                it.close()
+                //imprime respuesta.
+                println("POST Response : $response")
+
+            }
+        }
+    }
+
+
+
+
 
 
 
