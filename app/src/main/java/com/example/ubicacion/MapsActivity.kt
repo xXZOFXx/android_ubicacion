@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -15,11 +18,14 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import okhttp3.*
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+
+
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener  {
 
@@ -27,6 +33,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private lateinit var lastLocation: Location
+
+    private val client = OkHttpClient()
 
 
     companion object{
@@ -54,8 +62,44 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        run("https://api.github.com/users/Evin1-/repos")
+
+
+
 
     }
+
+
+    fun run(url: String) {
+        val request = Request.Builder()
+            .url(url)
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {}
+            override fun onResponse(call: Call, response: Response) = println(response.body?.string())
+        })
+    }
+
+
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu,menu);
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id = item.itemId;
+        if (id == R.id.add_action){
+            Toast.makeText(this, "item Add Clicked", Toast.LENGTH_SHORT).show()
+            return true
+        }else{
+            Toast.makeText(this,"Seeting clicked",Toast.LENGTH_SHORT).show()
+            return true
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
 
     /**
      * Manipulates the map once available.
@@ -96,43 +140,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
 
-    fun sendPost(id:String, lat:String) {
 
-        //Define url para realizar peticion POST.
-        var urlPost = "http://18.217.147.215:5000/api/eventos/v1/crearevento";
 
-        //Concatena y codifica parámetros.
-        var reqParam = URLEncoder.encode("id", "UTF-8") + "=" + URLEncoder.encode(id, "UTF-8")
-        reqParam += "&" + URLEncoder.encode("lat", "UTF-8") + "=" + URLEncoder.encode(lat, "UTF-8")
 
-        val mURL = URL(urlPost)
-
-        with(mURL.openConnection() as HttpURLConnection) {
-            //Define metodo
-            requestMethod = "POST"
-
-            val wr = OutputStreamWriter(getOutputStream());
-            wr.write(reqParam);
-            wr.flush();
-
-            println(requestMethod + "URL : $url")
-            println(requestMethod + "Response Code : $responseCode")
-
-            BufferedReader(InputStreamReader(inputStream)).use {
-                val response = StringBuffer()
-
-                var inputLine = it.readLine()
-                while (inputLine != null) {
-                    response.append(inputLine)
-                    inputLine = it.readLine()
-                }
-                it.close()
-                //imprime respuesta.
-                println("POST Response : $response")
-
-            }
-        }
-    }
 
 
 
